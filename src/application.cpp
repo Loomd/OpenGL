@@ -7,17 +7,20 @@
 // Vertex Shader Source Code
 const char* vertexShader = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"//out vec4 vertexColor;\n" //specify a color output to the fragment shader
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   //vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
 "}\0";
 
 // Fragment Shader Source Code
 const char* fragmentShader = "#version 330 core\n"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = ourColor;\n"
 "}\n";
 
 // Yellow Fragment Shader Source Code
@@ -77,7 +80,7 @@ static unsigned int CreateShader(const std::string& vertexShader, const std::str
 bool isYellow = false; // Toggle between yellow and orange
 unsigned int shaderProgram, yellowShaderProgram;
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
+static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
@@ -96,7 +99,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
     }
 }
 
-void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
+static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
@@ -127,6 +130,8 @@ int main()
         std::cout << "ERROR: Failed to initialize GLEW!" << std::endl;
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
 
+   
+
 
     // Triangle Data
     float triangle_one[6] = {
@@ -150,7 +155,6 @@ int main()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glEnableVertexAttribArray(0); // Enable the vertex attribute at location 0.
     // Unbind the VBO and VAO to avoid accidental modifications.
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
 
@@ -160,26 +164,38 @@ int main()
     glGenBuffers(1, &buffer2);
     glBindVertexArray(vao2);
     glBindBuffer(GL_ARRAY_BUFFER, buffer2);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), triangle_two, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), triangle_two, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
     // Create and Use Shader Program
     yellowShaderProgram = CreateShader(vertexShader, yellowFragmentShader);
     shaderProgram = CreateShader(vertexShader, fragmentShader);
+    float greenValue = 0.5f;
+    int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
     glUseProgram(shaderProgram);
-
+    glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
     
     //Register keyCallback() and mouseButtonCallback() 
     glfwSetKeyCallback(window, keyCallback);
     glfwSetMouseButtonCallback(window, mouseButtonCallback);
 
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     // Rendering Loop: Continues until glfwWindowShouldClose() returns true.
     while (!glfwWindowShouldClose(window)) 
     {
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT); // Clear the screen with a preset color.
+
+        float timeValue = glfwGetTime();
+        greenValue = sin(timeValue) / 2.0f + 0.5f;
+        vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        if (!isYellow) 
+        {
+            glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        }
 
         // Draw Triangle One
         glBindVertexArray(vertexArrayObject1);
